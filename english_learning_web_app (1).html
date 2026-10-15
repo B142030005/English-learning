@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster - 沉浸式英文聽讀闖關特訓</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter & Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Celebration Effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Poppins', sans-serif; }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.8); }
+        }
+        .animate-glow { animation: pulse-glow 2s infinite; }
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300" id="bodyRoot">
+
+    <!-- Top Navigation Bar -->
+    <header class="glass-card sticky top-0 z-50 border-b border-slate-800 px-4 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+            <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center">
+                <i class="fa-solid fa-headphones-simple text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-display font-black text-xl tracking-wide bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">VocabMaster</h1>
+                <p class="text-xs text-slate-400 font-medium">聽讀口說沉浸式學習系統</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs & Stats Badges -->
+        <div class="flex items-center space-x-2 sm:space-x-4">
+            <div class="hidden md:flex items-center space-x-3 bg-slate-900/85 px-4 py-1.5 rounded-full border border-slate-700 text-xs font-semibold">
+                <div class="flex items-center text-amber-400 space-x-1.5" title="累積經驗值">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span id="navXp">0 XP</span>
+                </div>
+                <div class="h-3 w-px bg-slate-700"></div>
+                <div class="flex items-center text-emerald-400 space-x-1.5" title="連續登入/答對天數">
+                    <i class="fa-solid fa-fire"></i>
+                    <span id="navStreak">1 天</span>
+                </div>
+                <div class="h-3 w-px bg-slate-700"></div>
+                <div class="flex items-center text-cyan-400 space-x-1.5" title="整體答對率">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span id="navAccuracy">0%</span>
+                </div>
+                <div class="h-3 w-px bg-slate-700"></div>
+                <div class="flex items-center text-indigo-400 space-x-1.5" title="總答對題數">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span id="navCorrectCount">0</span>
+                </div>
+            </div>
+
+            <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-700 text-slate-300 transition" title="切換深淺色模式">
+                <i class="fa-solid fa-moon" id="themeIcon"></i>
+            </button>
+
+            <button onclick="openStatsModal()" class="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="hidden sm:inline">學習儀表板</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col">
+
+        <!-- Tab 1: Dashboard / Level Selection -->
+        <section id="tab-dashboard" class="space-y-8 animate-fadeIn">
+            <!-- Welcome Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900/60 via-purple-900/60 to-slate-900/80 p-6 sm:p-10 border border-indigo-500/20 shadow-2xl">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-2xl">
+                    <div class="inline-flex items-center space-x-2 bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-xs font-bold mb-4 border border-indigo-500/30">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Web Speech API 智能聽讀訓練</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-display font-extrabold tracking-tight mb-3">
+                        精準掌握 <span class="bg-gradient-to-r from-indigo-400 to-pink-400 bg-clip-text text-transparent">250個核心單字與片語</span>
+                    </h2>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+                        本系統結合語音合成（TTS）與語音辨識（STT）。您可以透過聆聽標準發音、挑戰口說評分，並進行趣味聽力與閃卡闖關，全方位提升英語聽讀實力！
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="selectLevel(1)" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/40 transition flex items-center space-x-2">
+                            <i class="fa-solid fa-play"></i>
+                            <span>開始 Level 1 挑戰</span>
+                        </button>
+                        <button onclick="openVocabularyList()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-5 py-3 rounded-xl border border-slate-700 transition flex items-center space-x-2">
+                            <i class="fa-solid fa-book-open"></i>
+                            <span>瀏覽完整單字清單</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Grid (5 Levels) -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-display font-bold flex items-center space-x-2">
+                        <i class="fa-solid fa-layer-group text-indigo-400"></i>
+                        <span>選擇學習等級 (Level 1 - Level 5)</span>
+                    </h3>
+                    <span class="text-xs text-slate-400">每個等級包含 50 個實用詞彙與即時答對率統計</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" id="levelGridContainer">
+                    <!-- Dynamically populated via JS -->
+                </div>
+            </div>
+
+            <!-- Quick Practice Modes -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                <div onclick="startQuiz('listening')" class="glass-card hover:border-indigo-500/50 p-6 rounded-2xl cursor-pointer transition group shadow-lg">
+                    <div class="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-ear-listen"></i>
+                    </div>
+                    <h4 class="font-display font-bold text-lg mb-1">聽音選義測驗</h4>
+                    <p class="text-xs text-slate-400 mb-4">聆聽發音，從四個選項中選出正確中文含義，訓練敏銳聽力。</p>
+                    <span class="text-xs font-bold text-indigo-400 flex items-center space-x-1">
+                        <span>立即測驗</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </span>
+                </div>
+
+                <div onclick="startQuiz('speaking')" class="glass-card hover:border-emerald-500/50 p-6 rounded-2xl cursor-pointer transition group shadow-lg">
+                    <div class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                    </div>
+                    <h4 class="font-display font-bold text-lg mb-1">口說挑戰 (STT)</h4>
+                    <p class="text-xs text-slate-400 mb-4">使用麥克風朗讀單字，AI 語音辨識即時判定發音標準度。</p>
+                    <span class="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+                        <span>開始口說</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </span>
+                </div>
+
+                <div onclick="startQuiz('flashcard')" class="glass-card hover:border-purple-500/50 p-6 rounded-2xl cursor-pointer transition group shadow-lg">
+                    <div class="w-12 h-12 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-clone"></i>
+                    </div>
+                    <h4 class="font-display font-bold text-lg mb-1">閃卡與拼字闖關</h4>
+                    <p class="text-xs text-slate-400 mb-4">翻轉閃卡記憶單字，並挑戰拼寫輸入，快速深化大腦記憶。</p>
+                    <span class="text-xs font-bold text-purple-400 flex items-center space-x-1">
+                        <span>進入閃卡</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition"></i>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Level Hub / Detail View -->
+        <section id="tab-level-hub" class="hidden space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-3xl border border-slate-800">
+                <div class="flex items-center space-x-4">
+                    <button onclick="switchTab('dashboard')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl text-slate-300 transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span id="hubLevelBadge" class="bg-indigo-500/20 text-indigo-400 text-xs font-bold px-2.5 py-0.5 rounded-md border border-indigo-500/30">Level 1</span>
+                            <h3 id="hubLevelTitle" class="text-2xl font-display font-bold">基礎日常詞彙</h3>
+                        </div>
+                        <p id="hubLevelDesc" class="text-xs text-slate-400">收錄 50 個日常生活中最常使用的基礎單字與短句。</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="startLevelQuiz('listening')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-md transition flex items-center space-x-2">
+                        <i class="fa-solid fa-gamepad"></i>
+                        <span>開始本級測驗</span>
+                    </button>
+                    <button onclick="startLevelQuiz('speaking')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm shadow-md transition flex items-center space-x-2">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span>口說闖關</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Vocabulary Table / Cards List -->
+            <div class="glass-card rounded-3xl p-6 border border-slate-800">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="text" id="vocabSearchInput" oninput="filterVocabList()" placeholder="搜尋單字、中文或例句..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div class="flex items-center space-x-3 text-xs text-slate-400">
+                        <span>顯示 50 個單字與片語</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                <th class="py-3 px-4">#</th>
+                                <th class="py-3 px-4">英文單字 / 片語</th>
+                                <th class="py-3 px-4">中文意思</th>
+                                <th class="py-3 px-4">實用例句</th>
+                                <th class="py-3 px-4 text-center">聽音朗讀</th>
+                                <th class="py-3 px-4 text-center">口說測試</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vocabTableBody" class="divide-y divide-slate-800/60 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Interactive Quiz Mode -->
+        <section id="tab-quiz" class="hidden max-w-3xl mx-auto w-full space-y-6 animate-fadeIn">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
+                <!-- Quiz Header Progress -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="exitQuiz()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-900 border border-slate-800 transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <span id="quizModeTitle" class="bg-indigo-500/20 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full border border-indigo-500/30">聽音選義測驗</span>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-400">
+                        題目 <span id="quizCurrentIndex" class="text-indigo-400 font-bold">1</span> / <span id="quizTotalCount">10</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-900 rounded-full h-2 mb-8 overflow-hidden">
+                    <div id="quizProgressBar" class="bg-indigo-500 h-full transition-all duration-300 w-10%"></div>
+                </div>
+
+                <!-- Quiz Content Container -->
+                <div id="quizContentArea" class="space-y-6 text-center">
+                    <!-- Dynamic question content goes here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 4: Flashcard & Spelling Mode -->
+        <section id="tab-flashcard" class="hidden max-w-2xl mx-auto w-full space-y-6 animate-fadeIn">
+            <div class="flex items-center justify-between mb-2">
+                <button onclick="exitQuiz()" class="bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>返回選單</span>
+                </button>
+                <div class="text-xs text-slate-400">閃卡記憶卡片 (<span id="fcCurrentIdx">1</span>/<span id="fcTotalCount">10</span>)</div>
+            </div>
+
+            <!-- Flip Card Container -->
+            <div class="perspective-1000 w-full h-80 cursor-pointer" onclick="flipCard()">
+                <div id="flashcardInner" class="relative w-full h-full duration-500 transform-style-3d shadow-2xl rounded-3xl">
+                    <!-- Front Side -->
+                    <div class="absolute inset-0 w-full h-full glass-card rounded-3xl p-8 flex flex-col items-center justify-center backface-hidden border border-slate-700">
+                        <div class="absolute top-4 right-4 bg-indigo-500/20 text-indigo-400 text-xs font-bold px-3 py-1 rounded-full">點擊翻轉</div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <h3 id="fcWord" class="text-4xl font-display font-extrabold tracking-wide text-indigo-300">Apple</h3>
+                            <button onclick="event.stopPropagation(); speakWord(document.getElementById('fcWord').innerText);" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 p-3 rounded-full transition">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-400">點擊卡片查看中文與例句</p>
+                    </div>
+                    <!-- Back Side -->
+                    <div class="absolute inset-0 w-full h-full glass-card rounded-3xl p-8 flex flex-col items-center justify-center backface-hidden rotate-y-180 border border-indigo-500/40 bg-slate-900/90">
+                        <h4 id="fcMeaning" class="text-2xl font-display font-bold text-emerald-400 mb-3">蘋果</h4>
+                        <p id="fcExample" class="text-sm text-slate-300 italic text-center max-w-md mb-2">"She ate a crisp red apple."</p>
+                        <p id="fcExampleZh" class="text-xs text-slate-400 text-center">她吃了一顆清脆的紅蘋果。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flashcard Controls -->
+            <div class="flex items-center justify-center space-x-4 pt-2">
+                <button onclick="prevFlashcard()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold px-6 py-3 rounded-2xl transition flex items-center space-x-2">
+                    <i class="fa-solid fa-chevron-left"></i>
+                    <span>上一張</span>
+                </button>
+                <button onclick="nextFlashcard()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-3 rounded-2xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+                    <span>下一張</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+        <p>VocabMaster - Web Speech API English Learning System &copy; 2026. Designed with ❤️ for English Learners.</p>
+    </footer>
+
+    <!-- Statistics Modal -->
+    <div id="statsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-fadeIn">
+        <div class="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-2xl relative">
+            <button onclick="closeStatsModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="bg-indigo-500/20 text-indigo-400 p-3 rounded-2xl">
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-display font-bold text-xl">學習統計與答對率儀表板</h3>
+                    <p class="text-xs text-slate-400">追蹤您的英語學習進度與精準答對表現</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                    <span class="text-xs text-slate-400 block mb-1">累積經驗值 (XP)</span>
+                    <span id="modalXp" class="text-2xl font-display font-extrabold text-amber-400">0 XP</span>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                    <span class="text-xs text-slate-400 block mb-1">連續答對天數</span>
+                    <span id="modalStreak" class="text-2xl font-display font-extrabold text-emerald-400">1 天</span>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                    <span class="text-xs text-slate-400 block mb-1">總練習作答題數</span>
+                    <span id="modalTotalPracticed" class="text-2xl font-display font-extrabold text-indigo-400">0 題</span>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                    <span class="text-xs text-slate-400 block mb-1">整體平均答對率</span>
+                    <span id="modalAccuracy" class="text-2xl font-display font-extrabold text-cyan-400">0%</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">各等級答對率與解鎖進度</h4>
+                <div id="modalLevelProgressList" class="space-y-2">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button onclick="closeStatsModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                    關閉儀表板
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Notification Box (No alert()) -->
+    <div id="msgBox" class="fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 transition-all duration-300">
+        <div id="msgBoxContent" class="glass-card bg-slate-900/95 text-white px-6 py-4 rounded-2xl shadow-2xl border border-indigo-500/50 flex items-center space-x-3">
+            <i id="msgBoxIcon" class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+            <div>
+                <h5 id="msgBoxTitle" class="font-bold text-sm">提示訊息</h5>
+                <p id="msgBoxText" class="text-xs text-slate-300">這是通知文字</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        /* ==========================================================
+           1. VOCABULARY DATABASE (5 Levels, 50 Words each = 250 Total)
+           ========================================================== */
+        const VOCAB_DATA = {
+            1: [
+                { id: 1, word: "Apple", meaning: "蘋果", example: "She ate a crisp red apple.", exampleZh: "她吃了一顆清脆的紅蘋果。" },
+                { id: 2, word: "Book", meaning: "書本", example: "He is reading an interesting book.", exampleZh: "他正在讀一本有趣的書。" },
+                { id: 3, word: "Cat", meaning: "貓", example: "The cute cat is sleeping on the sofa.", exampleZh: "這隻可愛的貓正在沙發上睡覺。" },
+                { id: 4, word: "Dog", meaning: "狗", example: "My dog likes to catch balls.", exampleZh: "我的狗喜歡接球。" },
+                { id: 5, word: "Egg", meaning: "雞蛋", example: "I have two eggs for breakfast.", exampleZh: "我早餐吃了兩個雞蛋。" },
+                { id: 6, word: "Fish", meaning: "魚", example: "Fish can swim fast in the water.", exampleZh: "魚能在水中快速游動。" },
+                { id: 7, word: "Girl", meaning: "女孩", example: "The little girl is singing a song.", exampleZh: "那個小女孩正在唱歌。" },
+                { id: 8, word: "House", meaning: "房子", example: "They live in a large white house.", exampleZh: "他們住在一棟白色的大房子裡。" },
+                { id: 9, word: "Ice", meaning: "冰", example: "Put some ice in my cold drink.", exampleZh: "在我的冷飲裡加點冰塊。" },
+                { id: 10, word: "Juice", meaning: "果汁", example: "Orange juice is good for health.", exampleZh: "柳橙汁對健康很好。" },
+                { id: 11, word: "Key", meaning: "鑰匙", example: "I lost my house key yesterday.", exampleZh: "我昨天弄丟了家裡的鑰匙。" },
+                { id: 12, word: "Lion", meaning: "獅子", example: "The lion is the king of the jungle.", exampleZh: "獅子是叢林之王。" },
+                { id: 13, word: "Milk", meaning: "牛奶", example: "Drinking milk helps you grow strong.", exampleZh: "喝牛奶有助於強壯身體。" },
+                { id: 14, word: "Night", meaning: "夜晚", example: "The stars shine brightly at night.", exampleZh: "星星在夜晚閃閃發光。" },
+                { id: 15, word: "Pen", meaning: "原子筆", example: "Can I borrow your black pen?", exampleZh: "我可以借你的黑色原子筆嗎？" },
+                { id: 16, word: "Queen", meaning: "女王", example: "The queen waved to the happy crowd.", exampleZh: "女王向歡樂的人群揮手。" },
+                { id: 17, word: "Rain", meaning: "雨", example: "Don't forget your umbrella in the rain.", exampleZh: "下雨天別忘了帶傘。" },
+                { id: 18, word: "Sun", meaning: "太陽", example: "The sun warms the earth every day.", exampleZh: "太陽每天溫暖著大地。" },
+                { id: 19, word: "Tree", meaning: "樹木", example: "Birds are singing in the green tree.", exampleZh: "鳥兒在綠樹上歌唱。" },
+                { id: 20, word: "Water", meaning: "水", example: "Please drink enough water every day.", exampleZh: "請每天喝足夠的水。" },
+                { id: 21, word: "Friend", meaning: "朋友", example: "She is my best friend at school.", exampleZh: "她是我在學校最好的朋友。" },
+                { id: 22, word: "School", meaning: "學校", example: "We walk to school together.", exampleZh: "我們一起走路去學校。" },
+                { id: 23, word: "Teacher", meaning: "老師", example: "Our English teacher is very kind.", exampleZh: "我們的英文老師非常親切。" },
+                { id: 24, word: "Student", meaning: "學生", example: "Hardworking students achieve success.", exampleZh: "努力的學生會獲得成功。" },
+                { id: 25, word: "Family", meaning: "家庭", example: "Family support means everything.", exampleZh: "家庭的支持代表了一切。" },
+                { id: 26, word: "Happy", meaning: "快樂的", example: "I am so happy to see you.", exampleZh: "很高興能見到你。" },
+                { id: 27, word: "Morning", meaning: "早晨", example: "Good morning, everyone!", exampleZh: "大家早安！" },
+                { id: 28, word: "Music", meaning: "音樂", example: "Listening to music relaxes my mind.", exampleZh: "聼音樂能放鬆我的心靈。" },
+                { id: 29, word: "Phone", meaning: "電話/手機", example: "He answered his phone quickly.", exampleZh: "他迅速接起手機。" },
+                { id: 30, word: "Time", meaning: "時間", example: "Time flies when you are having fun.", exampleZh: "快樂的時光過得特別快。" },
+                { id: 31, word: "World", meaning: "世界", example: "There are many cultures in the world.", exampleZh: "世界上有許多不同的文化。" },
+                { id: 32, word: "Year", meaning: "年", example: "This year has been wonderful.", exampleZh: "今年是非常美好的一年。" },
+                { id: 33, word: "Color", meaning: "顏色", example: "What is your favorite color?", exampleZh: "你最喜歡什麼顏色？" },
+                { id: 34, word: "Food", meaning: "食物", example: "Italian food is delicious.", exampleZh: "義大利美食非常好吃。" },
+                { id: 35, word: "Game", meaning: "遊戲", example: "Let us play a board game together.", exampleZh: "我們一起玩桌遊吧。" },
+                { id: 36, word: "Hand", meaning: "手", example: "Raise your hand if you know the answer.", exampleZh: "知道答案請舉手。" },
+                { id: 37, word: "Land", meaning: "土地", example: "Farmers work hard on this land.", exampleZh: "農夫們在這片土地上辛苦耕作。" },
+                { id: 38, word: "Map", meaning: "地圖", example: "Look at the map to find the way.", exampleZh: "看地圖來找路。" },
+                { id: 39, word: "Park", meaning: "公園", example: "Children are playing in the park.", exampleZh: "孩子們正在公園裡玩耍。" },
+                { id: 40, word: "Road", meaning: "道路", example: "Be careful when crossing the road.", exampleZh: "過馬路時請小心。" },
+                { id: 41, word: "Star", meaning: "星星", example: "The night sky is full of stars.", exampleZh: "夜空中布滿了星星。" },
+                { id: 42, word: "Town", meaning: "城鎮", example: "This mountain town is peaceful.", exampleZh: "這個山城非常寧靜。" },
+                { id: 43, word: "Wind", meaning: "風", example: "A cool wind blows through the trees.", exampleZh: "一陣涼風吹過樹梢。" },
+                { id: 44, word: "Door", meaning: "門", example: "Please close the door quietly.", exampleZh: "請輕輕關上門。" },
+                { id: 45, word: "Window", meaning: "窗戶", example: "Open the window for fresh air.", exampleZh: "打開窗戶呼吸新鮮空氣。" },
+                { id: 46, word: "Table", meaning: "桌子", example: "Dinner is ready on the table.", exampleZh: "晚餐在桌上準備好了。" },
+                { id: 47, word: "Chair", meaning: "椅子", example: "Take a seat on the comfortable chair.", exampleZh: "坐在這張舒適的椅子上。" },
+                { id: 48, word: "Box", meaning: "箱子", example: "The box is filled with old toys.", exampleZh: "這個箱子裝滿了舊玩具。" },
+                { id: 49, word: "Ball", meaning: "球", example: "The boy kicked the ball into the net.", exampleZh: "男孩把球踢進了網子裡。" },
+                { id: 50, word: "Flower", meaning: "花朵", example: "Red flowers bloom in spring.", exampleZh: "紅色的花朵在春天綻放。" }
+            ],
+            2: [
+                { id: 51, word: "Adventure", meaning: "冒險", example: "They went on an exciting adventure in Africa.", exampleZh: "他們在非洲展開了一場刺激的冒險。" },
+                { id: 52, word: "Beautiful", meaning: "美麗的", example: "The sunset over the ocean is beautiful.", exampleZh: "海上的日落非常美麗。" },
+                { id: 53, word: "Confident", meaning: "有信心的", example: "She felt confident before the interview.", exampleZh: "她在面試前感到很有信心。" },
+                { id: 54, word: "Discover", meaning: "發現", example: "Scientists discover new species every year.", exampleZh: "科學家每年都發現新物種。" },
+                { id: 55, word: "Energy", meaning: "活力/能量", example: "Children have endless energy all day.", exampleZh: "孩子們整天都有用不完的精力。" },
+                { id: 56, word: "Festival", meaning: "節慶", example: "The lantern festival attracts thousands.", exampleZh: "燈會吸引了成千上萬的人。" },
+                { id: 57, word: "Generate", meaning: "產生", example: "Solar panels generate clean electricity.", exampleZh: "太陽能板能產生乾淨的電力。" },
+                { id: 58, word: "Hospital", meaning: "醫院", example: "Doctors and nurses work in the hospital.", exampleZh: "醫生和護士在醫院工作。" },
+                { id: 59, word: "Imagine", meaning: "想像", example: "Imagine a world without plastic waste.", exampleZh: "想像一個沒有塑膠垃圾的世界。" },
+                { id: 60, word: "Journey", meaning: "旅程", example: "Life is a journey of continuous learning.", exampleZh: "人生是一場持續學習的旅程。" },
+                { id: 61, word: "Knowledge", meaning: "知識", example: "Reading books expands your knowledge.", exampleZh: "閱讀書籍能擴展你的知識。" },
+                { id: 62, word: "Language", meaning: "語言", example: "English is a global communication language.", exampleZh: "英語是全球溝通的語言。" },
+                { id: 63, word: "Mountain", meaning: "山脈", example: "They love hiking in the high mountains.", exampleZh: "他們喜歡在高山中健行。" },
+                { id: 64, word: "Natural", meaning: "自然的", example: "Choose natural ingredients for your skin.", exampleZh: "為你的肌膚選擇天然成分。" },
+                { id: 65, word: "Observe", meaning: "觀察", example: "Astronomers observe stars through telescopes.", exampleZh: "天文學家透過望遠鏡觀察星星。" },
+                { id: 66, word: "Patient", meaning: "有耐心的/病人", example: "A good teacher must be very patient.", exampleZh: "一位好老師必須非常有耐心。" },
+                { id: 67, word: "Quality", meaning: "品質", example: "We focus on product quality and safety.", exampleZh: "我們專注於產品品質與安全。" },
+                { id: 68, word: "Recognize", meaning: "認出/識別", example: "I didn't recognize him with his new haircut.", exampleZh: "他剪了新髮型，我差點認不出他。" },
+                { id: 69, word: "Solution", meaning: "解決方案", example: "We need a quick solution to this problem.", exampleZh: "我們需要針對這個問題找出快速的解決方案。" },
+                { id: 70, word: "Travel", meaning: "旅行", example: "Travel broadens your horizons.", exampleZh: "旅行能開闊你的視野。" },
+                { id: 71, word: "Understand", meaning: "理解", example: "Do you understand the grammar rules?", exampleZh: "你理解這些文法規則嗎？" },
+                { id: 72, word: "Valuable", meaning: "有價值的", example: "Time is our most valuable asset.", exampleZh: "時間是我們最寶貴的資產。" },
+                { id: 73, word: "Weather", meaning: "天氣", example: "The weather forecast predicts heavy rain.", exampleZh: "氣象預報預測會下大雨。" },
+                { id: 74, word: "Express", meaning: "表達", example: "Art is a way to express inner feelings.", exampleZh: "藝術是表達內心感受的一種方式。" },
+                { id: 75, word: "Successful", meaning: "成功的", example: "Hard work is the key to a successful career.", exampleZh: "努力工作是事業成功的關鍵。" },
+                { id: 76, word: "Environment", meaning: "環境", example: "We must protect our natural environment.", exampleZh: "我們必須保護自然環境。" },
+                { id: 77, word: "Develop", meaning: "發展/開發", example: "They developed a new mobile application.", exampleZh: "他們開發了一款新的手機應用程式。" },
+                { id: 78, word: "Create", meaning: "創造", example: "Artists create stunning paintings.", exampleZh: "藝術家創造出驚豔的畫作。" },
+                { id: 79, word: "Practice", meaning: "練習", example: "Daily practice makes your English fluent.", exampleZh: "每日練習能讓你的英語更流利。" },
+                { id: 80, word: "Improve", meaning: "改善/進步", example: "Read more books to improve your vocabulary.", exampleZh: "多讀書來增加你的字彙量。" },
+                { id: 81, word: "Achieve", meaning: "達成", example: "Set clear goals to achieve your dreams.", exampleZh: "設定明確目標以實現夢想。" },
+                { id: 82, word: "Protect", meaning: "保護", example: "Wear sunglasses to protect your eyes.", exampleZh: "戴太陽眼鏡來保護眼睛。" },
+                { id: 83, word: "Support", meaning: "支持", example: "Thank you for your continuous support.", exampleZh: "謝謝你一直以來的支持。" },
+                { id: 84, word: "Traditional", meaning: "傳統的", example: "We enjoy traditional food during holidays.", exampleZh: "我們在假期享用傳統美食。" },
+                { id: 85, word: "Modern", meaning: "現代的", example: "This city is famous for modern architecture.", exampleZh: "這座城市以現代建築聞名。" },
+                { id: 86, word: "Global", meaning: "全球的", example: "English is used in global business.", exampleZh: "英語被應用於全球商業中。" },
+                { id: 87, word: "Local", meaning: "當地的", example: "Try local snacks when visiting new places.", exampleZh: "造訪新地方時品嚐當地小吃。" },
+                { id: 88, word: "Public", meaning: "公眾的", example: "Public libraries are free for everyone.", exampleZh: "公共圖書館對所有人免費開放。" },
+                { id: 89, word: "Private", meaning: "私人的", example: "This is a private conversation.", exampleZh: "這是一場私人對話。" },
+                { id: 90, word: "Active", meaning: "活躍的", example: "Stay physically active for good health.", exampleZh: "保持身體活躍以維持健康。" },
+                { id: 91, word: "Creative", meaning: "有創造力的", example: "Designers need creative inspiration.", exampleZh: "設計師需要有創造力的靈感。" },
+                { id: 92, word: "Curious", meaning: "好奇的", example: "Children are naturally curious about the world.", exampleZh: "孩子們對世界天生充滿好奇。" },
+                { id: 93, word: "Diligent", meaning: "勤奮的", example: "Diligent workers earn respect.", exampleZh: "勤奮的工作者贏得尊重。" },
+                { id: 94, word: "Efficient", meaning: "有效率的", example: "Automation makes workflow more efficient.", exampleZh: "自動化讓工作流程更有效率。" },
+                { id: 95, word: "Flexible", meaning: "有彈性的", example: "We have a flexible working schedule.", exampleZh: "我們有彈性的工作時間表。" },
+                { id: 96, word: "Honest", meaning: "誠實的", example: "Always be honest with your friends.", exampleZh: "對朋友永遠要誠實。" },
+                { id: 97, word: "Polite", meaning: "有禮貌的", example: "It is polite to say thank you.", exampleZh: "說謝謝是有禮貌的表現。" },
+                { id: 98, word: "Sincere", meaning: "真誠的", example: "Please accept my sincere apology.", exampleZh: "請接受我真誠的道歉。" },
+                { id: 99, word: "Talented", meaning: "有才能的", example: "She is a talented young pianist.", exampleZh: "她是一位有才華的年輕鋼琴家。" },
+                { id: 100, word: "Wonderful", meaning: "極好的", example: "We had a wonderful vacation.", exampleZh: "我們渡過了一個美妙的假期。" }
+            ],
+            3: [
+                { id: 101, word: "Accomplish", meaning: "完成/實現", example: "Teamwork helped us accomplish the project on time.", exampleZh: "團隊合作幫助我們按時完成了專案。" },
+                { id: 102, word: "Beneficial", meaning: "有益的", example: "Regular exercise is beneficial for health.", exampleZh: "規律運動對健康很有益處。" },
+                { id: 103, word: "Challenge", meaning: "挑戰", example: "Accepting challenges leads to personal growth.", exampleZh: "接受挑戰能促進個人成長。" },
+                { id: 104, word: "Determine", meaning: "決定/決心", example: "Hard work will determine your future success.", exampleZh: "努力將決定你未來的成功。" },
+                { id: 105, word: "Emphasize", meaning: "強調", example: "The manager emphasized the importance of safety.", exampleZh: "經理強調了安全的重要性。" },
+                { id: 106, word: "Fascinating", meaning: "迷人的/極有趣的", example: "Marine biology is a fascinating field.", exampleZh: "海洋生物學是一個迷人的領域。" },
+                { id: 107, word: "Guarantee", meaning: "保證", example: "We guarantee 100% customer satisfaction.", exampleZh: "我們保證100%的客戶滿意度。" },
+                { id: 108, word: "Independence", meaning: "獨立", example: "Studying abroad builds personal independence.", exampleZh: "出國留學建立個人的獨立性。" },
+                { id: 109, word: "Magnificent", meaning: "壯麗的/宏偉的", example: "The ancient castle looks magnificent.", exampleZh: "這座古城堡看起來宏偉壯觀。" },
+                { id: 110, word: "Negotiate", meaning: "談判/協商", example: "Both companies negotiated a new contract.", exampleZh: "兩家公司協商了一份新合約。" },
+                { id: 111, word: "Outstanding", meaning: "傑出的", example: "Her outstanding performance won an award.", exampleZh: "她傑出的表現贏得了一座獎項。" },
+                { id: 112, word: "Persuade", meaning: "說服", example: "He tried to persuade his team to adopt the plan.", exampleZh: "他試圖說服團隊採納這個計畫。" },
+                { id: 113, word: "Recognizable", meaning: "可辨認的", example: "Their brand logo is globally recognizable.", exampleZh: "他們的品牌標誌在全球都辨識度很高。" },
+                { id: 114, word: "Significant", meaning: "顯著的/重要的", example: "There was a significant increase in sales.", exampleZh: "銷售額有了顯著的成長。" },
+                { id: 115, word: "Transparent", meaning: "透明的", example: "Honesty makes government policy transparent.", exampleZh: "誠實使政府政策更加透明。" },
+                { id: 116, word: "Unbelievable", meaning: "難以置信的", example: "The magician's trick was unbelievable.", exampleZh: "魔術師的把戲簡直令人難以置信。" },
+                { id: 117, word: "Vulnerable", meaning: "脆弱的/易受傷的", example: "Young plants are vulnerable to frost.", exampleZh: "幼苗容易受霜害影響。" },
+                { id: 118, word: "Appropriate", meaning: "適當的", example: "Wear appropriate clothes for the formal party.", exampleZh: "為正式派對穿著合適的服裝。" },
+                { id: 119, word: "Consequence", meaning: "後果", example: "Every action has its own consequence.", exampleZh: "每一個行動都有其相對應的後果。" },
+                { id: 120, word: "Demonstrate", meaning: "示範/證明", example: "The chef demonstrated how to bake bread.", exampleZh: "主廚示範了如何烘焙麵包。" },
+                { id: 121, word: "Establish", meaning: "建立", example: "The company was established in 1995.", exampleZh: "該公司成立於1995年。" },
+                { id: 122, word: "Foundation", meaning: "基礎", example: "Strong grammar is the foundation of writing.", exampleZh: "扎實的文法是寫作的基礎。" },
+                { id: 123, word: "Implement", meaning: "實施/執行", example: "New safety rules will be implemented soon.", exampleZh: "新的安全規則將很快實施。" },
+                { id: 124, word: "Maintain", meaning: "維持/保養", example: "Regular maintenance keeps your car running smoothly.", exampleZh: "定期保養讓你的車子運作順暢。" },
+                { id: 125, word: "Participate", meaning: "參與", example: "All employees must participate in the workshop.", exampleZh: "所有員工都必須參加這個工作坊。" },
+                { id: 126, word: "Perspective", meaning: "觀點/視角", example: "Travel gives you a new perspective on life.", exampleZh: "旅行賦予你對人生全新的觀點。" },
+                { id: 127, word: "Recommending", meaning: "推薦", example: "Thank you for recommending this great book.", exampleZh: "謝謝你推薦這本好書。" },
+                { id: 128, word: "Strategy", meaning: "策略", example: "Marketing strategy determines sales growth.", exampleZh: "行銷策略決定了銷售成長。" },
+                { id: 129, word: "Transform", meaning: "轉變/改造", example: "Technology continues to transform education.", exampleZh: "科技持續在改變教育的面貌。" },
+                { id: 130, word: "Alternative", meaning: "替代方案", example: "We are searching for alternative energy sources.", exampleZh: "我們正在尋找替代能源。" },
+                { id: 131, word: "Characteristic", meaning: "特徵", example: "Patience is a key characteristic of leaders.", exampleZh: "耐心是領導者的核心特徵。" },
+                { id: 132, word: "Distinguish", meaning: "區分", example: "It's hard to distinguish identical twins.", exampleZh: "很難區分雙胞胎兄弟。" },
+                { id: 133, word: "Evaluate", meaning: "評估", example: "Teachers evaluate students based on essays.", exampleZh: "老師根據論文來評估學生的表現。" },
+                { id: 134, word: "Fundamentally", meaning: "根本上", example: "Opinions on this matter differ fundamentally.", exampleZh: "對於這件事的看法根本上有所不同。" },
+                { id: 135, word: "Hierarchy", meaning: "階層", example: "Corporate hierarchy defines reporting lines.", exampleZh: "公司階層界定了回報線。" },
+                { id: 136, word: "Innovative", meaning: "創新的", example: "Apple is known for innovative products.", exampleZh: "蘋果公司以創新產品聞名。" },
+                { id: 137, word: "Justify", meaning: "證明...正當", example: "Can you justify your absence yesterday?", exampleZh: "你能為你昨天的缺席做出合理解釋嗎？" },
+                { id: 138, word: "Mechanism", meaning: "機制", example: "Defense mechanism protects mental health.", exampleZh: "防衛機制保護了心理健康。" },
+                { id: 139, word: "Novel", meaning: "小說/新穎的", example: "She is writing a historical fiction novel.", exampleZh: "她正在寫一本歷史小說。" },
+                { id: 140, word: "Objective", meaning: "客觀的/目標", example: "Our primary objective is customer satisfaction.", exampleZh: "我們的主要目標是客戶滿意度。" },
+                { id: 141, word: "Phenomenon", meaning: "現象", example: "Aurora is a breathtaking natural phenomenon.", exampleZh: "極光是一個令人屏息的自然現象。" },
+                { id: 142, word: "Resilient", meaning: "有韌性的/恢復力強的", example: "Small businesses proved resilient during crisis.", exampleZh: "小企業在危機中展現了強大韌性。" },
+                { id: 143, word: "Tolerant", meaning: "包容的", example: "A diverse society must be tolerant and open.", exampleZh: "多元社會必須包容且開放。" },
+                { id: 144, word: "Utilize", meaning: "利用", example: "Utilize online tools to learn foreign languages.", exampleZh: "利用線上工具來學習外語。" },
+                { id: 145, word: "Widespread", meaning: "廣泛的", example: "The new policy received widespread support.", exampleZh: "這項新政策獲得了廣泛的支持。" },
+                { id: 146, word: "Accelerate", meaning: "加速", example: "Electric cars accelerate smoothly and quietly.", exampleZh: "電動車加速平穩又安靜。" },
+                { id: 147, word: "Collaborate", meaning: "合作", example: "Researchers collaborate across international borders.", exampleZh: "研究人員跨國界攜手合作。" },
+                { id: 148, word: "Diverse", meaning: "多樣化的", example: "Our team has diverse cultural backgrounds.", exampleZh: "我們的團隊擁有多元的文化背景。" },
+                { id: 149, word: "Facilitate", meaning: "促進/使容易", example: "Good software facilitates remote collaboration.", exampleZh: "好的軟體有助於遠端協作。" },
+                { id: 150, word: "Generate", meaning: "生成/產生", example: "Wind turbines generate renewable energy.", exampleZh: "風力渦輪機產生再生能源。" }
+            ],
+            4: [
+                { id: 151, word: "Ambiguous", meaning: "模稜兩可的", example: "The contract clause was somewhat ambiguous.", exampleZh: "合約條款有點模稜兩可。" },
+                { id: 152, word: "Bureaucracy", meaning: "官僚體制", example: "Reducing bureaucracy speeds up business approvals.", exampleZh: "減少官僚體制能加速企業審批。" },
+                { id: 153, word: "Comprehensive", meaning: "全面的/綜合的", example: "We offer a comprehensive health insurance plan.", exampleZh: "我們提供全面的健康保險計畫。" },
+                { id: 154, word: "Detrimental", meaning: "有害的", example: "Smoking has detrimental effects on lungs.", exampleZh: "抽菸對肺部有有害的影響。" },
+                { id: 155, word: "Eloquent", meaning: "雄辯的/口才流利的", example: "She gave an eloquent speech at the graduation.", exampleZh: "她在畢業典禮上發表了動人的演說。" },
+                { id: 156, word: "Fluctuation", meaning: "波動/起伏", example: "Currency markets experience daily fluctuation.", exampleZh: "貨幣市場每天都在經歷波動。" },
+                { id: 157, word: "Gargantuan", meaning: "巨大的/龐大的", example: "Cleaning the stadium was a gargantuan task.", exampleZh: "清理體育場是一項龐大的任務。" },
+                { id: 158, word: "Hypothesis", meaning: "假設", example: "Scientists tested their hypothesis in the lab.", exampleZh: "科學家在實驗室中驗證他們的假設。" },
+                { id: 159, word: "Inevitable", meaning: "無可避免的", example: "Change is an inevitable part of growing up.", exampleZh: "改變是成長過程中不可避免的部分。" },
+                { id: 160, word: "Juxtaposition", meaning: "並列/對照", example: "The juxtaposition of old and new architecture is striking.", exampleZh: "新舊建築的並置對比非常鮮明。" },
+                { id: 161, word: "Meticulous", meaning: "一絲不苟的/細緻的", example: "The artist did meticulous work on the portrait.", exampleZh: "藝術家在這幅肖像畫上做了細緻入微的工作。" },
+                { id: 162, word: "Nostalgia", meaning: "鄉愁/懷舊之情", example: "Listening to old songs filled him with nostalgia.", exampleZh: "聽著老歌讓他充滿了懷舊之情。" },
+                { id: 163, word: "Paradigm", meaning: "典範/範例", example: "The internet created a paradigm shift in media.", exampleZh: "網際網路在媒體界創造了典範轉移。" },
+                { id: 164, word: "Quintessential", meaning: "典型的/精華的", example: "Rainy London weather is quintessential British.", exampleZh: "多雨的倫敦天氣是典型的英國風情。" },
+                { id: 165, word: "Repercussion", meaning: "不良後果/迴響", example: "Economic decisions can have global repercussions.", exampleZh: "經濟決策可能會產生全球性的後果。" },
+                { id: 166, word: "Scrutiny", meaning: "詳細審查", example: "Financial records are under strict government scrutiny.", exampleZh: "財務紀錄正受到政府的嚴格審查。" },
+                { id: 167, word: "Tenuous", meaning: "脆弱的/微弱的", example: "Their alliance was based on a tenuous agreement.", exampleZh: "他們的同盟建立在薄弱的協議上。" },
+                { id: 168, word: "Ubiquitous", meaning: "無所不在的", example: "Smartphones have become ubiquitous nowadays.", exampleZh: "智慧型手機如今已無所不在。" },
+                { id: 169, word: "Vindication", meaning: "證明無罪/辯護成功", example: "The DNA test brought complete vindication.", exampleZh: "DNA檢測帶來了完全的平反。" },
+                { id: 170, word: "Zealous", meaning: "熱情的/狂熱的", example: "The zealous fans cheered for their team.", exampleZh: "狂熱的球迷為他們的隊伍歡呼。" },
+                { id: 171, word: "Altruistic", meaning: "利他主義的", example: "Her charitable donations were entirely altruistic.", exampleZh: "她的慈善捐款完全是基於利他精神。" },
+                { id: 172, word: "Cacophony", meaning: "雜音/刺耳的聲音", example: "Traffic created a cacophony in the downtown street.", exampleZh: "交通在市中心街道上製造了一陣吵雜的聲音。" },
+                { id: 173, word: "Debilitate", meaning: "使衰弱", example: "The severe illness debilitated his body.", exampleZh: "嚴重的疾病使他的身體變得虛弱。" },
+                { id: 174, word: "Eradicate", meaning: "根除/消滅", example: "Global campaigns aim to eradicate polio.", exampleZh: "全球運動旨在根除小兒麻痺症。" },
+                { id: 175, word: "Fastidious", meaning: "講究的/挑剔的", example: "He is fastidious about cleanliness in his kitchen.", exampleZh: "他對廚房的清潔非常講究挑剔。" },
+                { id: 176, word: "Gullible", meaning: "易受騙的", example: "Don't be so gullible to believe online scams.", exampleZh: "別那麼容易受騙去相信網路詐騙。" },
+                { id: 177, word: "Heresy", meaning: "異端邪說", example: "His radical ideas were initially considered heresy.", exampleZh: "他激進的想法最初被視為異端邪說。" },
+                { id: 178, word: "Impediment", meaning: "妨礙/障礙", example: "Language barrier is an impediment to global trade.", exampleZh: "語言障礙是全球貿易的一大阻礙。" },
+                { id: 179, word: "Jubilant", meaning: "歡欣鼓舞的", example: "Fans were jubilant after winning the championship.", exampleZh: "贏得冠軍後，球迷們歡欣鼓舞。" },
+                { id: 180, word: "Labyrinth", meaning: "迷宮", example: "The old town's streets formed a confusing labyrinth.", exampleZh: "老城區的街道形成了一個令人困惑的迷宮。" },
+                { id: 181, word: "Mollify", meaning: "平息/撫慰", example: "The manager tried to mollify the angry customer.", exampleZh: "經理試圖安撫憤怒的顧客。" },
+                { id: 182, word: "Nebulous", meaning: "模糊的/朦朧的", example: "His plans for the future remain nebulous.", exampleZh: "他對未來的計畫仍然很模糊。" },
+                { id: 183, word: "Ostracize", meaning: "排擠/放逐", example: "Bullying causes students to be ostracized.", exampleZh: "霸凌會導致學生被群體排擠。" },
+                { id: 184, word: "Pernicious", meaning: "有害的/致命的", example: "Fake news has a pernicious effect on democracy.", exampleZh: "假新聞對民主制度有著有害的影響。" },
+                { id: 185, word: "Recalcitrant", meaning: "頑抗的/倔強的", example: "Teachers struggled to control the recalcitrant student.", exampleZh: "老師們很難管教這位叛逆頑固的學生。" },
+                { id: 186, word: "Sycophant", meaning: "馬屁精", example: "The corrupt boss was surrounded by sycophants.", exampleZh: "腐敗的老闆身邊圍繞著拍馬屁的人。" },
+                { id: 187, word: "Truculent", meaning: "好鬥的/兇猛的", example: "His truculent attitude caused many arguments.", exampleZh: "他好鬥的態度引發了許多爭執。" },
+                { id: 188, word: "Vacillate", meaning: "猶豫不決/搖擺不定", example: "She tends to vacillate when making big decisions.", exampleZh: "她在做重大決定時往往猶豫不決。" },
+                { id: 189, word: "Wistful", meaning: "留戀的/沉思的", example: "He gave a wistful smile recalling his childhood.", exampleZh: "他回憶起童年時露出了依戀的微笑。" },
+                { id: 190, word: "Zenith", meaning: "鼎盛時期/頂峰", example: "His career reached its zenith in the 1990s.", exampleZh: "他的事業在1990年代達到巔峰。" },
+                { id: 191, word: "Benevolent", meaning: "慈善的/仁慈的", example: "The benevolent donor funded the new hospital.", exampleZh: "仁慈的捐贈者資助了這家新醫院。" },
+                { id: 192, word: "Cognitive", meaning: "認知的", example: "Reading puzzles improves cognitive functions.", exampleZh: "閱讀益智遊戲能改善認知功能。" },
+                { id: 193, word: "Divergent", meaning: "分歧的/發散的", example: "Team members had divergent views on the strategy.", exampleZh: "團隊成員對該策略有分歧的看法。" },
+                { id: 194, word: "Ephemeral", meaning: "短暫的/曇花一現的", example: "Fame and fortune are often ephemeral.", exampleZh: "名利往往是短暫即逝的。" },
+                { id: 195, word: "Pragmatic", meaning: "務實的", example: "We need a pragmatic approach to solve budget issues.", exampleZh: "我們需要務實的方法來解決預算問題。" },
+                { id: 196, word: "Spontaneous", meaning: "自發的/即興的", example: "The crowd broke into spontaneous applause.", exampleZh: "人群爆發出熱烈的即興掌聲。" },
+                { id: 197, word: "Substantiate", meaning: "證實/佐證", example: "Evidence is needed to substantiate the claim.", exampleZh: "需要證據來證實這項說法。" },
+                { id: 198, word: "Tentative", meaning: "暫時的/試探性的", example: "We made a tentative booking for next Friday.", exampleZh: "我們暫時預訂了下週五。" },
+                { id: 199, word: "Unprecedented", meaning: "空前絕後的", example: "Technology is advancing at an unprecedented rate.", exampleZh: "科技正以空前的速度發展。" },
+                { id: 200, word: "Venerable", meaning: "尊貴的/令人尊敬的", example: "The venerable professor retired after 40 years.", exampleZh: "這位受人尊敬的教授在服務40年後退休了。" }
+            ],
+            5: [
+                { id: 201, word: "Acquiesce", meaning: "默許/順從", example: "She decided to acquiesce to their demands.", exampleZh: "她決定默默接受他們的要求。" },
+                { id: 202, word: "Belligerent", meaning: "交戰的/好戰的", example: "The two rival nations adopted belligerent stances.", exampleZh: "兩個敵對國家採取了好戰的立場。" },
+                { id: 203, word: "Clandestine", meaning: "祕密的/暗中的", example: "Agents met in a clandestine operation.", exampleZh: "特工們在一次秘密行動中會面。" },
+                { id: 204, word: "Dichotomy", meaning: "二分法/對立", example: "There is a sharp dichotomy between theory and practice.", exampleZh: "理論與實踐之間存在著鮮明的對立。" },
+                { id: 205, word: "Euphemism", meaning: "委婉語", example: "'Passed away' is a polite euphemism for dying.", exampleZh: "「過世」是對死亡的有禮委婉說法。" },
+                { id: 206, word: "Furtive", meaning: "偷偷摸摸的", example: "He cast a furtive glance at the test paper.", exampleZh: "他偷偷地瞄了一眼考卷。" },
+                { id: 207, word: "Garrulous", meaning: "喋喋不休的/多話的", example: "The garrulous passenger talked throughout the flight.", exampleZh: "那個多話的乘客在整個航程中喋喋不休。" },
+                { id: 208, word: "Iconoclast", meaning: "打破傳統者/反傳統者", example: "Steve Jobs was a true business iconoclast.", exampleZh: "賈伯斯是一位真正的商業傳統破壞者。" },
+                { id: 209, word: "Idiosyncrasy", meaning: "個人氣質/特異獨行", example: "Wearing a red hat is one of his eccentric idiosyncrasies.", exampleZh: "戴紅帽子是他古怪的個人特質之一。" },
+                { id: 210, word: "Lachrymose", meaning: "愛哭的/悲傷的", example: "The sad movie had a lachrymose effect on the audience.", exampleZh: "這部悲傷的電影讓觀眾忍不住落淚。" },
+                { id: 211, word: "Mendacious", meaning: "虛偽的/說謊的", example: "His mendacious statements were exposed in court.", exampleZh: "他在法庭上虛偽的陳述遭到揭露。" },
+                { id: 212, word: "Nadir", meaning: "最低點", example: "Company morale reached its nadir after the layoff.", exampleZh: "公司士氣在裁員後降到最低點。" },
+                { id: 213, word: "Obfuscate", meaning: "使模糊/混淆", example: "Complex jargon only serves to obfuscate the issue.", exampleZh: "複雜的術語只會混淆問題焦點。" },
+                { id: 214, word: "Pedantic", meaning: "迂腐的/賣弄學問的", example: "His pedantic critique annoyed the creative writers.", exampleZh: "他迂腐的批評惹惱了創意作家們。" },
+                { id: 215, word: "Recapitulate", meaning: "重述要點/概括", example: "Let me briefly recapitulate the main points.", exampleZh: "讓我簡要重述一下主要重點。" },
+                { id: 216, word: "Sagacious", meaning: "睿智的/聰明的", example: "The CEO made sagacious investments during crisis.", exampleZh: "執行長在危機期間做了睿智的投資。" },
+                { id: 217, word: "Taciturn", meaning: "沉默寡言的", example: "Despite his taciturn nature, he is very kind.", exampleZh: "儘管他性格沉默寡言，人卻非常善良。" },
+                { id: 218, word: "Ubiquity", meaning: "無所不在", example: "The ubiquity of AI is transforming modern life.", exampleZh: "人工智慧的無所不在正在改變現代生活。" },
+                { id: 219, word: "Veracity", meaning: "真實性", example: "Journalists must check the veracity of news sources.", exampleZh: "記者必須核實新聞來源的真實性。" },
+                { id: 220, word: "Winsome", meaning: "迷人的/可愛的", example: "She won everyone's heart with her winsome smile.", exampleZh: "她以迷人的微笑贏得了所有人的心。" },
+                { id: 221, word: "Anomalous", meaning: "異常的/不規則的", example: "Test results showed anomalous temperature spikes.", exampleZh: "測試結果顯示出異常的溫度飆升。" },
+                { id: 222, word: "Capricious", meaning: "反覆無常的", example: "Weather in the mountains is notoriously capricious.", exampleZh: "山區的天氣出了名的反覆無常。" },
+                { id: 223, word: "Disparate", meaning: "截然不同的", example: "The report combined data from disparate sources.", exampleZh: "該報告結合了來自截然不同來源的數據。" },
+                { id: 224, word: "Equanimity", meaning: "鎮定/平心靜氣", example: "She accepted the criticism with remarkable equanimity.", exampleZh: "她以驚人的鎮定接受了批評。" },
+                { id: 225, word: "Fastidiousness", meaning: "一絲不苟/極度講究", example: "His fastidiousness ensured flawless craftsmanship.", exampleZh: "他的一絲不苟確保了無瑕的工藝。" },
+                { id: 226, word: "Garrulity", meaning: "喋喋不休", example: "Her natural garrulity made her a lively host.", exampleZh: "她天生多話的特質使她成為充滿活力的主持人。" },
+                { id: 227, word: "Intransigent", meaning: "不妥協的/固執的", example: "Negotiations failed due to both sides being intransigent.", exampleZh: "由於雙方都不肯妥協，談判破裂了。" },
+                { id: 228, word: "Magnanimity", meaning: "寬宏大量", example: "He showed great magnanimity in victory.", exampleZh: "他在勝利時展現了極大的寬宏大量。" },
+                { id: 229, word: "Nefarious", meaning: "邪惡的/不法的", example: "Police uncovered a nefarious smuggling ring.", exampleZh: "警方破獲了一個邪惡的走私集團。" },
+                { id: 230, word: "Parsimonious", meaning: "吝嗇的/過度節儉的", example: "The parsimonious billionaire lived in a small cottage.", exampleZh: "這位吝嗇的億萬富翁住在一間小茅屋裡。" },
+                { id: 231, word: "Recalcitrance", meaning: "頑抗/反叛", example: "The employee's recalcitrance led to dismissal.", exampleZh: "該員工的頑抗導致了他遭到解雇。" },
+                { id: 232, word: "Sanguine", meaning: "樂觀的/自信的", example: "Despite market crashes, he remained sanguine.", exampleZh: "儘管股市崩盤，他依然保持樂觀。" },
+                { id: 233, word: "Truculence", meaning: "殘暴/好鬥", example: "His sudden truculence shocked his colleagues.", exampleZh: "他突如其來的好鬥震驚了同事們。" },
+                { id: 234, word: "Vacuity", meaning: "空白/愚蠢", example: "The speech was criticized for its intellectual vacuity.", exampleZh: "這場演說因其思想貧乏而受到批評。" },
+                { id: 235, word: "Apotheosis", meaning: "神化/巔峰", example: "Winning the Nobel Prize was the apotheosis of her career.", exampleZh: "獲得諾貝爾獎是她職業生涯的巔峰。" },
+                { id: 236, word: "Circumlocution", meaning: "迂迴說法/囉嗦", example: "Avoid circumlocution; speak clearly and directly.", exampleZh: "避免迂迴囉嗦，請清楚直接地發言。" },
+                { id: 237, word: "Desultory", meaning: "散漫的/不系統的", example: "They had a desultory chat over coffee.", exampleZh: "他們一邊喝咖啡一邊進行了散漫的閒聊。" },
+                { id: 238, word: "Enervate", meaning: "使衰弱/無力", example: "The scorching heat tended to enervate workers.", exampleZh: "酷熱的天氣往往使工人們感到疲憊無力。" },
+                { id: 239, word: "Inexpugnable", meaning: "攻不破的/堅不可摧的", example: "The castle fortress was deemed inexpugnable.", exampleZh: "這座城堡要塞被認為是堅不可摧的。" },
+                { id: 240, word: "Meretricious", meaning: "華而不實的/金玉其外", example: "His argument sounded impressive but was meretricious.", exampleZh: "他的論點聽起來 impressive 但華而不實。" },
+                { id: 241, word: "Obviate", meaning: "排除/消除（障礙）", example: "Early booking will obviate any disappointment.", exampleZh: "提早預訂將能避免任何失望。" },
+                { id: 242, word: "Pecuniary", meaning: "金錢的/財政的", example: "She faced severe pecuniary difficulties last year.", exampleZh: "她去年面臨了嚴重的金錢困難。" },
+                { id: 243, word: "Redoubtable", meaning: "強大的/令人敬畏的", example: "She proved a redoubtable opponent in court.", exampleZh: "她在法庭上證明自己是一個令人敬畏的對手。" },
+                { id: 244, word: "Salubrious", meaning: "有益健康的/清爽的", example: "Mountain air is notoriously salubrious.", exampleZh: "山區的空氣對健康非常有好處。" },
+                { id: 245, word: "Truism", meaning: "老生常談/自明之理", example: "Hard work brings success is a familiar truism.", exampleZh: "「努力帶來成功」是個熟悉的老生常談。" },
+                { id: 246, word: "Vituperate", meaning: "謾罵/責罵", example: "Critics vituperated the controversial new movie.", exampleZh: "影評人猛烈抨擊了這部具爭議的新電影。" },
+                { id: 247, word: "Welter", meaning: "混亂/翻滾", example: "The desk was covered in a welter of papers.", exampleZh: "書桌上堆滿了凌亂的文件。" },
+                { id: 248, word: "Xenophobia", meaning: "仇外/排外", example: "Education helps eliminate xenophobia in society.", exampleZh: "教育有助於消除社會中的排外情緒。" },
+                { id: 249, word: "Yoke", meaning: "束縛/重軛", example: "People fought to throw off the yoke of tyranny.", exampleZh: "人們為擺脫暴政的束縛而戰。" },
+                { id: 250, word: "Zealotry", meaning: "狂熱", example: "Religious zealotry can sometimes cause conflicts.", exampleZh: "宗教狂熱有時會引發衝突。" }
+            ]
+        };
+
+        /* ==========================================================
+           2. APP STATE & LOCAL STORAGE
+           ========================================================== */
+        let userStats = JSON.parse(localStorage.getItem('vocabMasterStats')) || {
+            xp: 0,
+            streak: 1,
+            totalPracticed: 0,
+            correctCount: 0,
+            levels: {
+                1: { unlocked: true, practiced: 0, correct: 0 },
+                2: { unlocked: true, practiced: 0, correct: 0 },
+                3: { unlocked: true, practiced: 0, correct: 0 },
+                4: { unlocked: true, practiced: 0, correct: 0 },
+                5: { unlocked: true, practiced: 0, correct: 0 }
+            }
+        };
+
+        let currentLevel = 1;
+        let currentTab = 'dashboard';
+        let currentQuizType = 'listening'; // 'listening', 'speaking', 'flashcard'
+        let quizQuestions = [];
+        let quizIndex = 0;
+        let quizScore = 0;
+        let flashcardIndex = 0;
+        let isFlashcardFlipped = false;
+        let currentSpeakingItem = null;
+        let recognition = null;
+
+        // Initialize Speech Recognition if supported
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+        }
+
+        window.onload = function() {
+            renderDashboardLevels();
+            updateNavStats();
+        };
+
+        /* ==========================================================
+           3. UI NAVIGATION & RENDERING
+           ========================================================== */
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.getElementById('tab-dashboard').classList.add('hidden');
+            document.getElementById('tab-level-hub').classList.add('hidden');
+            document.getElementById('tab-quiz').classList.add('hidden');
+            document.getElementById('tab-flashcard').classList.add('hidden');
+
+            if (tabId === 'dashboard') {
+                document.getElementById('tab-dashboard').classList.remove('hidden');
+                renderDashboardLevels();
+            } else if (tabId === 'level-hub') {
+                document.getElementById('tab-level-hub').classList.remove('hidden');
+                renderLevelHub();
+            } else if (tabId === 'quiz') {
+                document.getElementById('tab-quiz').classList.remove('hidden');
+            } else if (tabId === 'flashcard') {
+                document.getElementById('tab-flashcard').classList.remove('hidden');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderDashboardLevels() {
+            const grid = document.getElementById('levelGridContainer');
+            const levelTitles = {
+                1: "基礎日常詞彙",
+                2: "進階生活表達",
+                3: "核心學術詞彙",
+                4: "高級專業片語",
+                5: "大師級艱澀字彙"
+            };
+            const levelColors = ['indigo', 'emerald', 'purple', 'amber', 'pink'];
+
+            grid.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const stats = userStats.levels[i];
+                const total = VOCAB_DATA[i].length;
+                const percent = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
+                const levelAcc = stats.practiced > 0 ? Math.round((stats.correct / stats.practiced) * 100) : 0;
+                const color = levelColors[i-1];
+
+                grid.innerHTML += `
+                    <div onclick="selectLevel(${i})" class="glass-card hover:border-${color}-500/60 p-5 rounded-2xl cursor-pointer transition flex flex-col justify-between group shadow-lg relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-${color}-500/10 rounded-full blur-xl group-hover:scale-150 transition"></div>
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="bg-${color}-500/20 text-${color}-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-${color}-500/30">Level ${i}</span>
+                                <span class="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20" title="答對率">答對率 ${levelAcc}%</span>
+                            </div>
+                            <h4 class="font-display font-bold text-base mb-1">${levelTitles[i]}</h4>
+                            <p class="text-xs text-slate-400 mb-4">50 個精選單字與片語</p>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span>已掌握</span>
+                                <span class="font-bold text-slate-200">${stats.correct} / ${total}</span>
+                            </div>
+                            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-${color}-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function selectLevel(lvl) {
+            currentLevel = lvl;
+            switchTab('level-hub');
+        }
+
+        function renderLevelHub() {
+            const levelTitles = {
+                1: "基礎日常詞彙",
+                2: "進階生活表達",
+                3: "核心學術詞彙",
+                4: "高級專業片語",
+                5: "大師級艱澀字彙"
+            };
+            document.getElementById('hubLevelBadge').innerText = `Level ${currentLevel}`;
+            document.getElementById('hubLevelTitle').innerText = levelTitles[currentLevel];
+            document.getElementById('hubLevelDesc').innerText = `收錄 Level ${currentLevel} 50 個實用單字與片語，提供標準 TTS 發音與 AI 口說評測。`;
+
+            renderVocabTable(VOCAB_DATA[currentLevel]);
+        }
+
+        function renderVocabTable(dataList) {
+            const tbody = document.getElementById('vocabTableBody');
+            tbody.innerHTML = '';
+
+            dataList.forEach((item, idx) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-900/40 transition">
+                        <td class="py-3 px-4 text-slate-500 font-mono text-xs">${idx + 1}</td>
+                        <td class="py-3 px-4 font-bold text-indigo-300 font-display text-base">
+                            ${item.word}
+                        </td>
+                        <td class="py-3 px-4 text-slate-200">${item.meaning}</td>
+                        <td class="py-3 px-4">
+                            <div class="text-slate-300 text-xs italic">"${item.example}"</div>
+                            <div class="text-slate-500 text-[11px]">${item.exampleZh}</div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="speakWord('${item.word.replace(/'/g, "\\'")}')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white p-2.5 rounded-xl transition shadow-sm" title="聆聽發音">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="startSingleSpeakingTest(${item.id})" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white p-2.5 rounded-xl transition shadow-sm" title="口說朗讀測試">
+                                <i class="fa-solid fa-microphone"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterVocabList() {
+            const keyword = document.getElementById('vocabSearchInput').value.toLowerCase();
+            const list = VOCAB_DATA[currentLevel];
+            const filtered = list.filter(item => 
+                item.word.toLowerCase().includes(keyword) || 
+                item.meaning.includes(keyword) || 
+                item.example.toLowerCase().includes(keyword)
+            );
+            renderVocabTable(filtered);
+        }
+
+        /* ==========================================================
+           4. WEB SPEECH API (TTS & STT)
+           ========================================================== */
+        function speakWord(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showNotification("您的瀏覽器不支援語音合成 (TTS)", "error");
+            }
+        }
+
+        function startSingleSpeakingTest(vocabId) {
+            const item = VOCAB_DATA[currentLevel].find(v => v.id === vocabId);
+            if (!item) return;
+
+            if (!recognition) {
+                showNotification("您的瀏覽器不支援語音辨識 (STT)，建議使用 Chrome", "error");
+                return;
+            }
+
+            speakWord(item.word);
+            showNotification(`請對著麥克風清晰朗讀: "${item.word}"`, "info");
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.trim();
+                const cleanTarget = item.word.toLowerCase().replace(/[^a-z]/g, '');
+                const cleanResult = transcript.toLowerCase().replace(/[^a-z]/g, '');
+
+                if (cleanResult.includes(cleanTarget) || cleanTarget.includes(cleanResult)) {
+                    triggerConfetti();
+                    showNotification(`太棒了！辨識結果: "${transcript}" (完全正確)`, "success");
+                    updateStatsOnSuccess();
+                } else {
+                    showNotification(`辨識結果: "${transcript}"，目標是 "${item.word}"，再試一次！`, "error");
+                }
+            };
+
+            recognition.onerror = function() {
+                showNotification("語音辨識發生錯誤，請再試一次。", "error");
+            };
+
+            try {
+                recognition.start();
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        /* ==========================================================
+           5. INTERACTIVE QUIZZES & FLASHCARDS
+           ========================================================== */
+        function startLevelQuiz(type) {
+            currentQuizType = type;
+            const words = [...VOCAB_DATA[currentLevel]];
+            quizQuestions = words.sort(() => 0.5 - Math.random()).slice(0, 10);
+            quizIndex = 0;
+            quizScore = 0;
+
+            if (type === 'flashcard') {
+                switchTab('flashcard');
+                loadFlashcard();
+            } else {
+                switchTab('quiz');
+                loadQuizQuestion();
+            }
+        }
+
+        function startQuiz(type) {
+            currentQuizType = type;
+            const words = [...VOCAB_DATA[currentLevel]];
+            quizQuestions = words.sort(() => 0.5 - Math.random()).slice(0, 10);
+            quizIndex = 0;
+            quizScore = 0;
+
+            if (type === 'flashcard') {
+                switchTab('flashcard');
+                loadFlashcard();
+            } else {
+                switchTab('quiz');
+                loadQuizQuestion();
+            }
+        }
+
+        function exitQuiz() {
+            switchTab('level-hub');
+        }
+
+        function loadQuizQuestion() {
+            if (quizIndex >= quizQuestions.length) {
+                finishQuiz();
+                return;
+            }
+
+            const q = quizQuestions[quizIndex];
+            document.getElementById('quizCurrentIndex').innerText = quizIndex + 1;
+            document.getElementById('quizTotalCount').innerText = quizQuestions.length;
+            document.getElementById('quizProgressBar').style.width = `${((quizIndex + 1) / quizQuestions.length) * 100}%`;
+
+            const area = document.getElementById('quizContentArea');
+
+            if (currentQuizType === 'listening') {
+                document.getElementById('quizModeTitle').innerText = "聽音選義測驗";
+                const allWords = VOCAB_DATA[currentLevel];
+                let options = [q];
+                while (options.length < 4) {
+                    const randomW = allWords[Math.floor(Math.random() * allWords.length)];
+                    if (!options.some(o => o.id === randomW.id)) {
+                        options.push(randomW);
+                    }
+                }
+                options.sort(() => 0.5 - Math.random());
+
+                area.innerHTML = `
+                    <div class="py-6">
+                        <button onclick="speakWord('${q.word}')" class="w-24 h-24 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/50 text-indigo-300 rounded-full mx-auto flex items-center justify-center text-4xl shadow-xl animate-glow transition mb-6">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <p class="text-slate-400 text-xs mb-6">點擊上方圖示聆聽發音，並選出正確含義</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            ${options.map(opt => `
+                                <button onclick="checkQuizAnswer(${opt.id}, ${q.id})" class="quiz-opt-btn bg-slate-900/80 hover:bg-indigo-600/20 border border-slate-700 hover:border-indigo-500 p-4 rounded-2xl text-left transition font-semibold text-slate-200">
+                                    ${opt.meaning} <span class="text-xs text-slate-500 block font-normal">(${opt.word})</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                speakWord(q.word);
+            } else if (currentQuizType === 'speaking') {
+                document.getElementById('quizModeTitle').innerText = "口說挑戰測驗";
+                area.innerHTML = `
+                    <div class="py-8 space-y-6">
+                        <div>
+                            <span class="text-xs text-slate-400 uppercase tracking-wider block mb-2">請朗讀以下英文單字</span>
+                            <h3 class="text-4xl font-display font-extrabold text-indigo-300 mb-2">${q.word}</h3>
+                            <p class="text-emerald-400 text-sm font-semibold">${q.meaning}</p>
+                            <p class="text-slate-400 text-xs italic mt-1">"${q.example}"</p>
+                        </div>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="speakWord('${q.word}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-3 rounded-2xl font-bold text-sm transition flex items-center space-x-2">
+                                <i class="fa-solid fa-volume-high"></i>
+                                <span>聽示範發音</span>
+                            </button>
+                            <button onclick="startQuizSpeakingRecognition(${q.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-emerald-600/30 transition flex items-center space-x-2">
+                                <i class="fa-solid fa-microphone"></i>
+                                <span>開始語音測驗</span>
+                            </button>
+                        </div>
+                        <div id="quizSpeechFeedback" class="text-xs text-slate-400 min-h-[24px]"></div>
+                    </div>
+                `;
+            }
+        }
+
+        function checkQuizAnswer(selectedId, correctId) {
+            const btns = document.querySelectorAll('.quiz-opt-btn');
+            btns.forEach(btn => btn.disabled = true);
+
+            const isCorrect = (selectedId === correctId);
+            updateStatsOnAttempt(isCorrect);
+
+            if (isCorrect) {
+                quizScore++;
+                showNotification("回答正確！ +15 XP", "success");
+                triggerConfetti();
+            } else {
+                showNotification("回答錯誤，再接再厲！", "error");
+            }
+
+            setTimeout(() => {
+                quizIndex++;
+                loadQuizQuestion();
+            }, 1500);
+        }
+
+        function startQuizSpeakingRecognition(correctId) {
+            const q = quizQuestions[quizIndex];
+            if (!recognition) {
+                showNotification("您的瀏覽器不支援語音辨識", "error");
+                return;
+            }
+
+            const feedback = document.getElementById('quizSpeechFeedback');
+            feedback.innerHTML = '<span class="text-amber-400 animate-pulse"><i class="fa-solid fa-microphone-lines"></i> 正在聆聽您的發音...請朗讀</span>';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.trim();
+                const cleanTarget = q.word.toLowerCase().replace(/[^a-z]/g, '');
+                const cleanResult = transcript.toLowerCase().replace(/[^a-z]/g, '');
+
+                const isCorrect = (cleanResult.includes(cleanTarget) || cleanTarget.includes(cleanResult));
+                updateStatsOnAttempt(isCorrect);
+
+                if (isCorrect) {
+                    feedback.innerHTML = `<span class="text-emerald-400 font-bold">辨識成功: "${transcript}" (完美發音！)</span>`;
+                    quizScore++;
+                    triggerConfetti();
+                    setTimeout(() => {
+                        quizIndex++;
+                        loadQuizQuestion();
+                    }, 1500);
+                } else {
+                    feedback.innerHTML = `<span class="text-rose-400">辨識為: "${transcript}"，目標是 "${q.word}"。請再試一次！</span>`;
+                    setTimeout(() => {
+                        quizIndex++;
+                        loadQuizQuestion();
+                    }, 2000);
+                }
+            };
+
+            try {
+                recognition.start();
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        function finishQuiz() {
+            const accuracy = quizQuestions.length > 0 ? Math.round((quizScore / quizQuestions.length) * 100) : 0;
+            const area = document.getElementById('quizContentArea');
+            area.innerHTML = `
+                <div class="py-10 space-y-6">
+                    <div class="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full mx-auto flex items-center justify-center text-3xl shadow-xl animate-bounce">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-display font-bold mb-2">測驗順利完成！</h3>
+                        <p class="text-slate-400 text-sm mb-1">本次答對題數: <span class="text-emerald-400 font-bold text-lg">${quizScore}</span> / ${quizQuestions.length}</p>
+                        <p class="text-slate-400 text-sm">本次測驗答對率: <span class="text-cyan-400 font-bold text-xl">${accuracy}%</span></p>
+                    </div>
+                    <div class="flex justify-center space-x-4 pt-4">
+                        <button onclick="startLevelQuiz('${currentQuizType}')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition">
+                            再次挑戰
+                        </button>
+                        <button onclick="switchTab('level-hub')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-6 py-3 rounded-xl border border-slate-700 transition">
+                            返回單字清單
+                        </button>
+                    </div>
+                </div>
+            `;
+            triggerConfetti();
+        }
+
+        /* Flashcard Logic */
+        function loadFlashcard() {
+            const words = VOCAB_DATA[currentLevel];
+            const q = words[flashcardIndex];
+            document.getElementById('fcCurrentIdx').innerText = flashcardIndex + 1;
+            document.getElementById('fcTotalCount').innerText = words.length;
+
+            document.getElementById('fcWord').innerText = q.word;
+            document.getElementById('fcMeaning').innerText = q.meaning;
+            document.getElementById('fcExample').innerText = `"${q.example}"`;
+            document.getElementById('fcExampleZh').innerText = q.exampleZh;
+
+            isFlashcardFlipped = false;
+            document.getElementById('flashcardInner').style.transform = 'rotateY(0deg)';
+        }
+
+        function flipCard() {
+            isFlashcardFlipped = !isFlashcardFlipped;
+            const inner = document.getElementById('flashcardInner');
+            if (isFlashcardFlipped) {
+                inner.style.transform = 'rotateY(180deg)';
+            } else {
+                inner.style.transform = 'rotateY(0deg)';
+            }
+        }
+
+        function nextFlashcard() {
+            const words = VOCAB_DATA[currentLevel];
+            flashcardIndex = (flashcardIndex + 1) % words.length;
+            loadFlashcard();
+        }
+
+        function prevFlashcard() {
+            const words = VOCAB_DATA[currentLevel];
+            flashcardIndex = (flashcardIndex - 1 + words.length) % words.length;
+            loadFlashcard();
+        }
+
+        /* ==========================================================
+           6. STATISTICS & GAMIFICATION
+           ========================================================== */
+        function updateStatsOnAttempt(isCorrect) {
+            userStats.totalPracticed += 1;
+            userStats.levels[currentLevel].practiced += 1;
+
+            if (isCorrect) {
+                userStats.xp += 15;
+                userStats.correctCount += 1;
+                userStats.levels[currentLevel].correct = Math.min(VOCAB_DATA[currentLevel].length, userStats.levels[currentLevel].correct + 1);
+            }
+
+            localStorage.setItem('vocabMasterStats', JSON.stringify(userStats));
+            updateNavStats();
+        }
+
+        function updateNavStats() {
+            const overallAcc = userStats.totalPracticed > 0 ? Math.round((userStats.correctCount / userStats.totalPracticed) * 100) : 0;
+            document.getElementById('navXp').innerText = `${userStats.xp} XP`;
+            document.getElementById('navStreak').innerText = `${userStats.streak} 天`;
+            document.getElementById('navAccuracy').innerText = `${overallAcc}%`;
+            document.getElementById('navCorrectCount').innerText = userStats.correctCount;
+        }
+
+        function openStatsModal() {
+            document.getElementById('modalXp').innerText = `${userStats.xp} XP`;
+            document.getElementById('modalStreak').innerText = `${userStats.streak} 天`;
+            document.getElementById('modalTotalPracticed').innerText = `${userStats.totalPracticed} 題`;
+
+            const overallAcc = userStats.totalPracticed > 0 ? Math.round((userStats.correctCount / userStats.totalPracticed) * 100) : 0;
+            document.getElementById('modalAccuracy').innerText = `${overallAcc}%`;
+
+            const listContainer = document.getElementById('modalLevelProgressList');
+            listContainer.innerHTML = '';
+
+            for (let i = 1; i <= 5; i++) {
+                const lvlStats = userStats.levels[i];
+                const lvlAcc = lvlStats.practiced > 0 ? Math.round((lvlStats.correct / lvlStats.practiced) * 100) : 0;
+                const correct = lvlStats.correct;
+                const total = VOCAB_DATA[i].length;
+                const pct = Math.round((correct / total) * 100);
+
+                listContainer.innerHTML += `
+                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span class="font-bold">Level ${i} (掌握度 ${correct}/${total})</span>
+                            <span class="font-bold text-cyan-400">答對率: ${lvlAcc}%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+                            <div class="bg-indigo-500 h-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('statsModal').classList.remove('hidden');
+        }
+
+        function closeStatsModal() {
+            document.getElementById('statsModal').classList.add('hidden');
+        }
+
+        function openVocabularyList() {
+            switchTab('level-hub');
+        }
+
+        /* ==========================================================
+           7. EFFECTS & NOTIFICATIONS
+           ========================================================== */
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function showNotification(text, type = 'success') {
+            const box = document.getElementById('msgBox');
+            const icon = document.getElementById('msgBoxIcon');
+            const title = document.getElementById('msgBoxTitle');
+            const desc = document.getElementById('msgBoxText');
+
+            if (type === 'success') {
+                icon.className = "fa-solid fa-circle-check text-emerald-400 text-xl";
+                title.innerText = "測驗通過";
+            } else if (type === 'error') {
+                icon.className = "fa-solid fa-circle-exclamation text-rose-400 text-xl";
+                title.innerText = "提示";
+            } else {
+                icon.className = "fa-solid fa-circle-info text-cyan-400 text-xl";
+                title.innerText = "系統通知";
+            }
+
+            desc.innerText = text;
+            box.classList.remove('translate-y-32', 'opacity-0');
+
+            setTimeout(() => {
+                box.classList.add('translate-y-32', 'opacity-0');
+            }, 3000);
+        }
+
+        function toggleTheme() {
+            const body = document.getElementById('bodyRoot');
+            const icon = document.getElementById('themeIcon');
+            body.classList.toggle('dark');
+            body.classList.toggle('light');
+            if (body.classList.contains('light')) {
+                body.className = "bg-slate-100 text-slate-900 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300 light";
+                icon.className = "fa-solid fa-sun";
+            } else {
+                body.className = "bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300 dark";
+                icon.className = "fa-solid fa-moon";
+            }
+        }
+    </script>
+</body>
+</html>
